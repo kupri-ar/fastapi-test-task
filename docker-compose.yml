@@ -1,0 +1,43 @@
+# docker-compose for local development
+
+version: '3'
+
+services:
+  database:
+    image: postgres:11.2
+    container_name: fastapi-db
+    env_file: .env
+    restart: always
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - main-tier
+    # todo: remove this:
+    ports:
+      - 5432:5432
+
+  app:
+    # for debugging: use 'docker-compose exec app sh' with the entrypoint param
+    # entrypoint: ["sh", "-c", "sleep 2073600"]
+    build:
+      context: ./app
+    command: sh -c 'uvicorn main:app --host 0.0.0.0'
+    container_name: fastapi
+    env_file: .env
+    restart: always
+    networks:
+      - main-tier
+    depends_on:
+      - database
+    ports:
+      - 8000:8000
+
+volumes:
+  db-data:
+    external: false
+    name: "${DB_VOLUME_NAME}"
+
+networks:
+  main-tier:
+    external: false
+    name: "${NETWORK_NAME}"
